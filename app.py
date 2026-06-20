@@ -1,74 +1,271 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+from io import BytesIO
 
-# ---------------- PAGE ----------------
-st.set_page_config(page_title="Finance Dashboard", layout="wide")
+# ---------------------------------------------------
+# PAGE SETTINGS
+# ---------------------------------------------------
+st.set_page_config(
+    page_title="Profit & Loss Dashboard",
+    layout="wide"
+)
 
-st.markdown("<h1 style='text-align:center; color:#4DB6FF;'>Usman Public School System</h1>", unsafe_allow_html=True)
-st.markdown("<h3 style='text-align:center;'>Profit & Loss Dashboard</h3>", unsafe_allow_html=True)
+# ---------------------------------------------------
+# HEADER
+# ---------------------------------------------------
+st.markdown(
+    """
+    <h1 style='text-align:center; color:#4DB6FF;'>
+    Usman Public School System
+    </h1>
+    <h3 style='text-align:center;'>
+    Profit & Loss Dashboard
+    </h3>
+    """,
+    unsafe_allow_html=True
+)
 
-st.write("---")
+st.divider()
 
-# ---------------- UPLOAD ----------------
-col1, col2 = st.columns(2)
+# ---------------------------------------------------
+# FILE UPLOADS
+# ---------------------------------------------------
+c1, c2 = st.columns(2)
 
-with col1:
-    income_file = st.file_uploader("Upload Income File", type=["xlsx"])
+with c1:
+    income_file = st.file_uploader(
+        "Upload Income File",
+        type="xlsx"
+    )
 
-with col2:
-    expense_file = st.file_uploader("Upload Expense File", type=["xlsx"])
+with c2:
+    expense_file = st.file_uploader(
+        "Upload Expense File",
+        type="xlsx"
+    )
 
-# ---------------- PROCESS ----------------
+# ---------------------------------------------------
+# PROCESS FILES
+# ---------------------------------------------------
 if income_file and expense_file:
 
     income_df = pd.read_excel(income_file)
     expense_df = pd.read_excel(expense_file)
 
-    # Safety check
-    required_cols = ["Account", "Amount"]
+    required_cols = [
+        "Campus",
+        "Month",
+        "Account",
+        "Amount"
+    ]
 
-    if not all(col in income_df.columns for col in required_cols) or not all(col in expense_df.columns for col in required_cols):
-        st.error("Both files must have 'Account' and 'Amount' columns")
-    else:
+    if (
+        not all(col in income_df.columns for col in required_cols)
+        or
+        not all(col in expense_df.columns for col in required_cols)
+    ):
+        st.error(
+            "Both files must contain "
+            "Campus, Month, Account and Amount columns."
+        )
+        st.stop()
 
-        # ---------------- TOTALS ----------------
-        total_income = income_df["Amount"].sum()
-        total_expense = expense_df["Amount"].sum()
-        net_profit = total_income - total_expense
+    # ---------------------------------------------------
+    # FILTERS
+    # ---------------------------------------------------
+    f1, f2 = st.columns(2)
 
-        # ---------------- KPIs ----------------
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Total Income", f"{total_income:,.0f}")
-        c2.metric("Total Expense", f"{total_expense:,.0f}")
-        c3.metric("Net Profit", f"{net_profit:,.0f}")
+    campuses = sorted(
+        income_df["Campus"].astype(str).unique()
+    )
 
-        st.write("---")
+    months = sorted(
+        income_df["Month"].astype(str).unique()
+    )
 
-        # ---------------- PIE CHART ----------------
+    with f1:
+        selected_campus = st.selectbox(
+            "Campus",
+            campuses
+        )
+
+    with f2:
+        selected_month = st.selectbox(
+            "Month",
+            months
+        )
+
+    # ---------------------------------------------------
+    # APPLY FILTERS
+    # ---------------------------------------------------
+    income_filtered = income_df[
+        (income_df["Campus"].astype(str)
+         == selected_campus)
+        &
+        (income_df["Month"].astype(str)
+         == selected_month)
+    ]
+
+    expense_filtered = expense_df[
+        (expense_df["Campus"].astype(str)
+         == selected_campus)
+        &
+        (expense_df["Month"].astype(str)
+         == selected_month)
+    ]
+
+    # ---------------------------------------------------
+    # KPI CALCULATIONS
+    # ---------------------------------------------------
+    total_income = (
+        income_filtered["Amount"].sum()
+    )
+
+    total_expense = (
+        expense_filtered["Amount"].sum()
+    )
+
+    net_profit = (
+        total_income
+        -
+        total_expense
+    )
+
+    st.divider()
+
+    # ---------------------------------------------------
+    # KPI CARDS
+    # ---------------------------------------------------
+    k1, k2, k3 = st.columns(3)
+
+    k1.metric(
+        "Total Income",
+        f"PKR {total_income:,.0f}"
+    )
+
+    k2.metric(
+        "Total Expense",
+        f"PKR {total_expense:,.0f}"
+    )
+
+    k3.metric(
+        "Net Profit",
+        f"PKR {net_profit:,.0f}"
+    )
+
+    st.divider()
+
+    # ---------------------------------------------------
+    # CHARTS
+    # ---------------------------------------------------
+    ch1, ch2 = st.columns(2)
+
+    with ch1:
+
+        pie_df = pd.DataFrame(
+            {
+                "Type": [
+                    "Income",
+                    "Expense"
+                ],
+                "Amount": [
+                    total_income,
+                    total_expense
+                ]
+            }
+        )
+
         fig1 = px.pie(
-            names=["Income", "Expense"],
-            values=[total_income, total_expense],
+            pie_df,
+            names="Type",
+            values="Amount",
+            hole=0.5,
             title="Income vs Expense"
         )
-        st.plotly_chart(fig1, use_container_width=True)
 
-        # ---------------- ACCOUNT WISE BREAKDOWN ----------------
-        col1, col2 = st.columns(2)
+        st.plotly_chart(
+            fig1,
+            use_container_width=True
+        )
 
-        with col1:
-            st.subheader("Income Breakdown (Account Wise)")
-            income_chart = income_df.groupby("Account")["Amount"].sum().reset_index()
-            fig2 = px.bar(income_chart, x="Account", y="Amount", title="Income by Account")
-            st.plotly_chart(fig2, use_container_width=True)
-            st.dataframe(income_chart)
+    with ch2:
 
-        with col2:
-            st.subheader("Expense Breakdown (Account Wise)")
-            expense_chart = expense_df.groupby("Account")["Amount"].sum().reset_index()
-            fig3 = px.bar(expense_chart, x="Account", y="Amount", title="Expense by Account")
-            st.plotly_chart(fig3, use_container_width=True)
-            st.dataframe(expense_chart)
+        expense_chart = (
+            expense_filtered
+            .groupby("Account")["Amount"]
+            .sum()
+            .reset_index()
+            .sort_values(
+                "Amount",
+                ascending=False
+            )
+        )
+
+        fig2 = px.bar(
+            expense_chart,
+            x="Account",
+            y="Amount",
+            title="Expense by Account"
+        )
+
+        st.plotly_chart(
+            fig2,
+            use_container_width=True
+        )
+
+    st.divider()
+
+    # ---------------------------------------------------
+    # TABLES
+    # ---------------------------------------------------
+    t1, t2 = st.columns(2)
+
+    with t1:
+
+        st.subheader(
+            "Income Accounts"
+        )
+
+        income_summary = (
+            income_filtered
+            .groupby("Account")["Amount"]
+            .sum()
+            .reset_index()
+            .sort_values(
+                "Amount",
+                ascending=False
+            )
+        )
+
+        st.dataframe(
+            income_summary,
+            use_container_width=True
+        )
+
+    with t2:
+
+        st.subheader(
+            "Expense Accounts"
+        )
+
+        expense_summary = (
+            expense_filtered
+            .groupby("Account")["Amount"]
+            .sum()
+            .reset_index()
+            .sort_values(
+                "Amount",
+                ascending=False
+            )
+        )
+
+        st.dataframe(
+            expense_summary,
+            use_container_width=True
+        )
 
 else:
-    st.info("Please upload BOTH Income and Expense Excel files")
+    st.info(
+        "Upload both Income and Expense files."
+    )
