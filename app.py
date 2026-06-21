@@ -2,7 +2,8 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from io import BytesIO
-
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
 # ---------------------------------------------------
 # PAGE SETTINGS
 # ---------------------------------------------------
@@ -315,7 +316,71 @@ if income_file and expense_file:
         f"P&L_{selected_campus}_"
         f"{selected_month}.xlsx"
     ),
-    mime=(
+    # PDF REPORT
+pdf_buffer = BytesIO()
+
+doc = SimpleDocTemplate(pdf_buffer)
+styles = getSampleStyleSheet()
+
+elements = []
+
+elements.append(
+    Paragraph(
+        "<b>Usman Public School System</b>",
+        styles["Title"]
+    )
+)
+
+elements.append(
+    Paragraph(
+        f"Campus: {selected_campus}",
+        styles["Normal"]
+    )
+)
+
+elements.append(
+    Paragraph(
+        f"Month: {selected_month}",
+        styles["Normal"]
+    )
+)
+
+elements.append(Spacer(1, 20))
+
+elements.append(
+    Paragraph(
+        f"Total Income: {total_income}",
+        styles["Normal"]
+    )
+)
+
+elements.append(
+    Paragraph(
+        f"Total Expense: {total_expense}",
+        styles["Normal"]
+    )
+)
+
+elements.append(
+    Paragraph(
+        f"Net Profit: {net_profit}",
+        styles["Normal"]
+    )
+)
+
+doc.build(elements)
+
+pdf_data = pdf_buffer.getvalue()
+
+st.download_button(
+    label="📄 Download PDF Report",
+    data=pdf_data,
+    file_name=(
+        f"P&L_{selected_campus}_"
+        f"{selected_month}.pdf"
+    ),
+    mime="application/pdf"
+)mime=(
         "application/"
         "vnd.openxmlformats-"
         "officedocument."
