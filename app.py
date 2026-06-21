@@ -19,7 +19,27 @@ st.set_page_config(
     page_title="Profit & Loss Dashboard",
     layout="wide"
 )
+st.markdown("""
+<style>
+    .block-container {
+        padding-top: 2rem;
+        padding-left: 2rem;
+        padding-right: 2rem;
+    }
 
+    h1, h2, h3 {
+        letter-spacing: 0.5px;
+    }
+
+    div[data-testid="metric-container"] {
+        background: #0e1628;
+        border: 1px solid #1f2a44;
+        padding: 15px;
+        border-radius: 12px;
+    }
+
+</style>
+""", unsafe_allow_html=True)
 # ---------------------------------------------------
 # HEADER
 # ---------------------------------------------------
@@ -335,3 +355,19 @@ else:
     st.info(
         "Upload both Income and Expense files."
     )
+pdf_buffer = generate_pdf(
+    selected_campus,
+    selected_month,
+    total_income,
+    total_expense,
+    net_profit,
+    income_summary,
+    expense_summary
+)
+
+st.download_button(
+    label="📄 Download PDF Report",
+    data=pdf_buffer,
+    file_name=f"P&L_{selected_campus}_{selected_month}.pdf",
+    mime="application/pdf"
+)
