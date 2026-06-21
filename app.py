@@ -264,7 +264,64 @@ if income_file and expense_file:
             expense_summary,
             use_container_width=True
         )
+# ---------------------------------------------------
+# DOWNLOAD EXCEL REPORT
+# ---------------------------------------------------
 
+excel_buffer = BytesIO()
+
+with pd.ExcelWriter(
+        excel_buffer,
+        engine="xlsxwriter"
+) as writer:
+
+    summary_df = pd.DataFrame({
+        "Particular": [
+            "Total Income",
+            "Total Expense",
+            "Net Profit"
+        ],
+        "Amount": [
+            total_income,
+            total_expense,
+            net_profit
+        ]
+    })
+
+    summary_df.to_excel(
+        writer,
+        sheet_name="Summary",
+        index=False
+    )
+
+    income_filtered.to_excel(
+        writer,
+        sheet_name="Income",
+        index=False
+    )
+
+    expense_filtered.to_excel(
+        writer,
+        sheet_name="Expense",
+        index=False
+    )
+
+excel_data = excel_buffer.getvalue()
+
+st.download_button(
+    label="📥 Download Excel Report",
+    data=excel_data,
+    file_name=(
+        f"P&L_{selected_campus}_"
+        f"{selected_month}.xlsx"
+    ),
+    mime=(
+        "application/"
+        "vnd.openxmlformats-"
+        "officedocument."
+        "spreadsheetml.sheet"
+    )
+)
 else:
     st.info(
         "Upload both Income and Expense files."
