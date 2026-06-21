@@ -11,7 +11,24 @@ st.set_page_config(
     page_title="Profit & Loss Dashboard",
     layout="wide"
 )
+st.markdown("""
+<style>
 
+div[data-testid="metric-container"]{
+    background-color:#1E1E1E;
+    border:1px solid #4DB6FF;
+    padding:20px;
+    border-radius:15px;
+}
+
+.stPlotlyChart{
+    border:1px solid #333333;
+    border-radius:15px;
+    padding:10px;
+}
+
+</style>
+""", unsafe_allow_html=True)
 # ---------------------------------------------------
 # HEADER
 # ---------------------------------------------------
@@ -265,7 +282,7 @@ if income_file and expense_file:
             expense_summary,
             use_container_width=True
         )
-# ---------------------------------------------------
+    # ---------------------------------------------------
     # DOWNLOAD EXCEL REPORT
     # ---------------------------------------------------
     
@@ -316,78 +333,74 @@ if income_file and expense_file:
         f"P&L_{selected_campus}_"
         f"{selected_month}.xlsx"
     ),
-    # PDF REPORT
-pdf_buffer = BytesIO()
-
-doc = SimpleDocTemplate(pdf_buffer)
-styles = getSampleStyleSheet()
-
-elements = []
-
-elements.append(
-    Paragraph(
-        "<b>Usman Public School System</b>",
-        styles["Title"]
-    )
-)
-
-elements.append(
-    Paragraph(
-        f"Campus: {selected_campus}",
-        styles["Normal"]
-    )
-)
-
-elements.append(
-    Paragraph(
-        f"Month: {selected_month}",
-        styles["Normal"]
-    )
-)
-
-elements.append(Spacer(1, 20))
-
-elements.append(
-    Paragraph(
-        f"Total Income: {total_income}",
-        styles["Normal"]
-    )
-)
-
-elements.append(
-    Paragraph(
-        f"Total Expense: {total_expense}",
-        styles["Normal"]
-    )
-)
-
-elements.append(
-    Paragraph(
-        f"Net Profit: {net_profit}",
-        styles["Normal"]
-    )
-)
-
-doc.build(elements)
-
-pdf_data = pdf_buffer.getvalue()
-
-st.download_button(
-    label="📄 Download PDF Report",
-    data=pdf_data,
-    file_name=(
-        f"P&L_{selected_campus}_"
-        f"{selected_month}.pdf"
-    ),
-    mime="application/pdf"
-)mime=(
+    mime=(
         "application/"
         "vnd.openxmlformats-"
         "officedocument."
         "spreadsheetml.sheet"
     )
 )
-else:
-    st.info(
-        "Upload both Income and Expense files."
+        # ---------------------------------------------------
+    # DOWNLOAD PDF REPORT
+    # ---------------------------------------------------
+
+    pdf_buffer = BytesIO()
+
+    doc = SimpleDocTemplate(pdf_buffer)
+    styles = getSampleStyleSheet()
+    elements = []
+
+    elements.append(
+        Paragraph(
+            "Usman Public School System",
+            styles["Title"]
+        )
+    )
+
+    elements.append(
+        Paragraph(
+            f"Campus: {selected_campus}",
+            styles["Normal"]
+        )
+    )
+
+    elements.append(
+        Paragraph(
+            f"Month: {selected_month}",
+            styles["Normal"]
+        )
+    )
+
+    elements.append(Spacer(1, 20))
+
+    elements.append(
+        Paragraph(
+            f"Total Income: {total_income}",
+            styles["Normal"]
+        )
+    )
+
+    elements.append(
+        Paragraph(
+            f"Total Expense: {total_expense}",
+            styles["Normal"]
+        )
+    )
+
+    elements.append(
+        Paragraph(
+            f"Net Profit: {net_profit}",
+            styles["Normal"]
+        )
+    )
+
+    doc.build(elements)
+
+    pdf_data = pdf_buffer.getvalue()
+
+    st.download_button(
+        label="📄 Download PDF Report",
+        data=pdf_data,
+        file_name=f"P&L_{selected_campus}_{selected_month}.pdf",
+        mime="application/pdf"
     )
