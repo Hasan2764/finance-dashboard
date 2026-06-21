@@ -3,6 +3,15 @@ import pandas as pd
 import plotly.express as px
 from io import BytesIO
 
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
+
+def generate_pdf(...):
+    ...
+    return buffer
+
+
 # ---------------------------------------------------
 # PAGE SETTINGS
 # ---------------------------------------------------
